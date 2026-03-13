@@ -62,7 +62,7 @@ resource "helm_release" "podinfo" {
   repository       = "https://stefanprodan.github.io/podinfo"
   chart            = "podinfo"
   namespace        = "default"
-  version          = "6.3.6"
+  version          = "6.11.0"
   values = [<<-YAML
 ingress:
   enabled: true
