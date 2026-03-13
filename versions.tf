@@ -24,7 +24,7 @@ terraform {
 
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "2.11.0"
+      version = "3.0.1"
     }
   }
 }
