@@ -11,7 +11,7 @@ resource "kind_cluster" "my-cluster" {
 
     node {
       role  = "control-plane"
-      image = "kindest/node:v1.23.4"
+      image = "kindest/node:v1.35.1"
 
       extra_port_mappings {
         container_port = 32080
@@ -26,20 +26,22 @@ resource "kind_cluster" "my-cluster" {
   }
 }
 
-resource "helm_release" "ingress_nginx" {
-  name             = "ingress-nginx"
-  repository       = "https://kubernetes.github.io/ingress-nginx"
-  chart            = "ingress-nginx"
-  namespace        = "ingress-nginx"
-  version          = "4.15.0"
+resource "helm_release" "traefik" {
+  name             = "traefik"
+  repository       = "https://traefik.github.io/charts"
+  chart            = "traefik"
+  namespace        = "traefik"
+  version          = "39.0.5"
   create_namespace = true
+  atomic           = true
   values = [<<EOF
-controller:
-  service:
-    type: NodePort
-    nodePorts:
-      http: 32080
-      https: 32443
+service:
+  type: NodePort
+ports:
+  web:
+    nodePort: 32080
+  websecure:
+    nodePort: 32443
 EOF
   ]
 }
@@ -51,22 +53,24 @@ resource "helm_release" "cert_manager" {
   namespace        = "cert-manager"
   version          = "v1.20.0"
   create_namespace = true
-  set {
-    name  = "installCRDs"
+  atomic           = true
+  set = [{
+    name  = "crds.enabled"
     value = "true"
-  }
+  }]
 }
 
 resource "helm_release" "podinfo" {
-  name             = "podinfo"
-  repository       = "https://stefanprodan.github.io/podinfo"
-  chart            = "podinfo"
-  namespace        = "default"
-  version          = "6.11.0"
+  name       = "podinfo"
+  repository = "https://stefanprodan.github.io/podinfo"
+  chart      = "podinfo"
+  namespace  = "default"
+  version    = "6.11.0"
+  atomic     = true
   values = [<<-YAML
 ingress:
   enabled: true
-  className: nginx
+  className: traefik
   annotations:
     cert-manager.io/cluster-issuer: jakuboskera-ca
   hosts:
@@ -107,7 +111,7 @@ resource "tls_self_signed_cert" "jakuboskera_ca_cert" {
   ]
 }
 
-resource "kubernetes_secret" "jakuboskera_ca" {
+resource "kubernetes_secret_v1" "jakuboskera_ca" {
   metadata {
     name      = "jakuboskera-ca"
     namespace = helm_release.cert_manager.namespace
@@ -129,11 +133,7 @@ metadata:
   name: jakuboskera-ca
 spec:
   ca:
-    secretName: ${kubernetes_secret.jakuboskera_ca.metadata[0].name}
+    secretName: ${kubernetes_secret_v1.jakuboskera_ca.metadata[0].name}
 YAML
   depends_on = [helm_release.cert_manager]
-}
-
-output "app_url" {
-  value = "https://${local.host}"
 }
