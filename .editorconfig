@@ -9,7 +9,7 @@ root = true
 [*]
 charset = utf-8
 indent_style = space
-indent_size = 4
+indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
 
@@ -25,11 +25,3 @@ trim_trailing_whitespace = false
 [{Makefile,**.mk}]
 # Use tabs for indentation (Makefiles require tabs)
 indent_style = tab
-
-# YAML Files
-[*.{yml,yaml}]
-indent_size = 2
-
-# Terraform files
-[*.tf]
-indent_size = 2
