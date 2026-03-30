@@ -31,7 +31,7 @@ resource "helm_release" "traefik" {
   repository       = "https://traefik.github.io/charts"
   chart            = "traefik"
   namespace        = "traefik"
-  version          = "39.0.6"
+  version          = "39.0.7"
   create_namespace = true
   atomic           = true
   values = [<<EOF
